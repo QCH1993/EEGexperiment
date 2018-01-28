@@ -13,7 +13,7 @@ x = SensorLoc(:,1);
 y = SensorLoc(:,2);
 
 
-for i = 1:400:col_eeg
+for i = 1:200:col_eeg
     z = eeg(:,i);
     [X,Y,Z]=griddata(x,y,z,linspace(-1,1)',linspace(-1,1),'v4');
     pcolor(X,Y,Z)
