@@ -1,0 +1,59 @@
+function f = FrequencyFeatureExtract( data )
+%FREQUENCYFEATUREEXTRACT Summary of this function goes here
+%   Detailed explanation goes here
+
+
+f_bandpower = bandpowerextract(data);
+f=f_bandpower;
+
+end
+
+function f_bandpower = bandpowerextract(data)
+   % define analysis parameters
+    xlen = length(data);                % length of the signal
+    wlen = 250;                        % window length (recomended to be power of 2)
+    hop = wlen;                         % hop size (recomended to be power of 2)
+    nfft =500;                        % number of fft points (recomended to be power of 2) bigger than wlen
+    fs = 500;
+    % perform STFT
+    [S, f, t] = stft(data, wlen, hop, nfft, fs);
+
+    % define the coherent amplification of the window
+    K = sum(hamming(wlen, 'periodic'))/wlen;
+
+    % take the amplitude of fft(x) and scale it, so not to be a
+    % function of the length of the window and its coherent amplification
+    S = abs(S)/wlen/K;
+
+    % correction of the DC & Nyquist component
+    if rem(nfft, 2)                     % odd nfft excludes Nyquist point
+        S(2:end, :) = S(2:end, :).*2;
+    else                                % even nfft includes Nyquist point
+        S(2:end-1, :) = S(2:end-1, :).*2;
+    end
+
+    % convert amplitude spectrum to dB (min = -120 dB)
+%     S1 = 20*log10(S + 1e-6);
+    power_series = sqrt(sum(S.*S,2));
+    delta = power_series(2:5);
+    theta = power_series(5:9);
+    alpha = power_series(9:13);
+    beta = power_series(13:31);
+    gamma = power_series(31:65);
+    
+    f_delta = [mean(delta),min(delta),max(delta),var(delta)];
+    f_theta = [mean(theta),min(theta),max(theta),var(theta)];
+    f_alpha = [mean(alpha),min(alpha),max(alpha),var(alpha)];
+    f_beta = [mean(beta),min(beta),max(beta),var(beta)];
+    f_gamma = [mean(gamma),min(gamma),max(gamma),var(gamma)];
+    f_beta_alpha = f_beta(1)./f_alpha(1);
+    f_bandpower_bands = [f_delta,f_theta,f_alpha,f_beta,f_gamma,f_beta_alpha];
+    
+    f_bandpower_bins = [];
+    for i=1:2:63
+        f_bandpower_bins = [f_bandpower_bins,mean(power_series(i:i+1))];
+    end
+    
+    f_bandpower = [f_bandpower_bands,f_bandpower_bins];
+end
+

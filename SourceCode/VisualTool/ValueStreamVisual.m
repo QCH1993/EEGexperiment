@@ -14,11 +14,13 @@ y = SensorLoc(:,2);
 
 
 % % parallel computing 
-MyPar = parpool;
-tic
-parfor i = 1:50
+% MyPar = parpool;
+ 
+for i = 1:10
     z = eeg(:,i);
+ 
     [X,Y,Z]=griddata(x,y,z,linspace(-1,1)',linspace(-1,1),'v4');
+    
     pcolor(X,Y,Z)
     colormap jet
     shading interp
@@ -28,12 +30,14 @@ parfor i = 1:50
     hold on 
     scatter(x,y,20,'k')
     text(SensorLoc(:,1),SensorLoc(:,2),SensorName,'fontsize',15)    
-
-    set(gcf,'visible','off');   
-     saveas(gcf,['../images/hard_theta/hard_zuoxuewen_',int2str(i)],'jpg');
+    
+    set(gcf,'visible','off'); 
+     tic
+    saveas(gcf,['../images/hard_theta/hard_zuoxuewen_',int2str(i)],'jpg');
+    toc
 end
-delete(MyPar);
-toc
+% delete(MyPar);
+% toc
 
 % % video
 

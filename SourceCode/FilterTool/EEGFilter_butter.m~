@@ -6,15 +6,12 @@ function  Mat_f = EEGFilter_butter(Mat,Fs,Fa,Fb)
 Wl = 2*Fa/Fs;
 Wh = 2*Fb/Fs;
 [b,a] = butter(4,[Wl,Wh]);
-if (Nchannels==1)
-        Mat_f = filter(b,a,Mat);
+
+for i = 1:32
+    Mat_f(i,:) = filter(b,a,Mat(i,:));
 end
 
 if (Nchannels>32)
-    for i = 1:32
-        Mat_f(i,:) = filter(b,a,Mat(i,:));
-    end
-
     for i = 33:Nchannels
         Mat_f(i,:) = Mat(i,:);
     end

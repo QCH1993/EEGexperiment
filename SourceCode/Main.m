@@ -9,36 +9,74 @@
 clc
 clear
 
-SourceDataPath = '../SourceData/';
+SourceDataPath = '../SourceData/HCII_datasets/';
 
 % load eeg and track data
-sample_path = [SourceDataPath,'HCII_datasets/20180125_zuoxuewen_F/']
-[Mat_eeg,config] = ReadEEG(sample_path,'vhdr');
-Mat_track = ReadTrack_csv(sample_path);
-% load electrodes position
-[SensorLoc,SensorName]= ReadLoc();
+file = dir(SourceDataPath);
 
-% Time calibration
-Mat_merged = TimeCorrect(Mat_eeg,Mat_track);
-% Seperation of different mode
-[EXP_prepare,EXP_easy,EXP_medium,EXP_hard] = SectionDivide(Mat_merged);
+MyPar = parpool;
+parfor i=3:length(file)
+    
+    sample_path = [SourceDataPath,file(i).name,'/'];
+    [Mat_eeg,config] = ReadEEG(sample_path,'vhdr');
+    Mat_track = ReadTrack_csv(sample_path);
+    % load electrodes position
+    [SensorLoc,SensorName]= ReadLoc();
 
-% Filter out 1-64Hz signal for advanced process
-Fs = config.SampleFrequency;
-Fa = 1;
-Fb = 64;
-EXP_prepare_f = EEGFilter(EXP_prepare,Fs,Fa,Fb,'butter');
-EXP_easy_f = EEGFilter(EXP_easy,Fs,Fa,Fb,'butter');
-EXP_medium_f = EEGFilter(EXP_medium,Fs,Fa,Fb,'butter');
-EXP_hard_f = EEGFilter(EXP_hard,Fs,Fa,Fb,'butter');
+    % Time calibration
+    Mat_merged = TimeCorrect(Mat_eeg,Mat_track);
+    % Seperation of different mode
+    [EXP_prepare,EXP_easy,EXP_medium,EXP_hard] = SectionDivide(Mat_merged);
 
-%cut the first 5s and last 5s data and filter to delta\theta\alpha\beta\gamma
-[prepare,prepare_delta,prepare_theta,prepare_alpha,prepare_beta,prepare_gamma] = EEGFilter_diffbands(EXP_prepare_f);
-[easy,easy_delta,easy_theta,easy_alpha,easy_beta,easy_gamma] = EEGFilter_diffbands(EXP_easy_f);
-[medium,medium_delta,medium_theta,medium_alpha,medium_beta,medium_gamma] = EEGFilter_diffbands(EXP_medium_f);
-[hard,hard_delta,hard_theta,hard_alpha,hard_beta,hard_gamma] = EEGFilter_diffbands(EXP_hard_f);
+    % Filter out 1-64Hz signal for advanced process
+    Fs = config.SampleFrequency;
+    Fa = 1;
+    Fb = 64;
+    EXP_prepare_f = EEGFilter(EXP_prepare,Fs,Fa,Fb,'butter');
+    EXP_easy_f = EEGFilter(EXP_easy,Fs,Fa,Fb,'butter');
+    EXP_medium_f = EEGFilter(EXP_medium,Fs,Fa,Fb,'butter');
+    EXP_hard_f = EEGFilter(EXP_hard,Fs,Fa,Fb,'butter');
 
+    %TODO:data cut and data normalization of each channel to 0-1(max-min)
+    EXP_prepare_c=  EXP_prepare(:,2500:end-2500);
+    EXP_easy_c =  EXP_easy(:,2500:end-2500);
+    EXP_medium_c = EXP_medium(:,2500:end-2500);
+    EXP_hard_c = EXP_hard(:,2500:end-2500);
 
+    EXP_prepare_n = normalize_maxmin( EXP_prepare_c(1:32,:) );
+    EXP_easy_n=  normalize_maxmin(EXP_easy_c(1:32,:));
+    EXP_medium_n = normalize_maxmin(EXP_medium_c(1:32,:));
+    EXP_hard_n = normalize_maxmin(EXP_hard_c(1:32,:));
 
+    track_prepare =  EXP_prepare_c(33:end,:) ;
+    track_easy =  EXP_easy_c(33:end,:);
+    track_medium = EXP_medium_c(33:end,:);
+    track_hard = EXP_hard_c(33:end,:);
+    %TODO:data FeatureExtract
+    stride=100;
+    window=5000;
+    [ eegFeatureMap_easy,trackLabel_easy ]=FeatureExtract(EXP_easy_n,'easy',track_easy ,stride,window);
+    [ eegFeatureMap_medium,trackLabel_medium ]=FeatureExtract(EXP_medium_n,'hard',track_medium ,stride,window);
+    [ eegFeatureMap_hard,trackLabel_hard ]=FeatureExtract(EXP_hard_n,'hard',track_hard ,stride,window);
+    
+    m=matfile(sprintf([file(i).name,'.mat']),'writable',true)
+    m.eegFeatureMap_easy=eegFeatureMap_easy;
+    m.trackLabel_easy=trackLabel_easy;
+    m.eegFeatureMap_medium=eegFeatureMap_medium;
+    m.trackLabel_medium=trackLabel_medium;
+    m.eegFeatureMap_hard=eegFeatureMap_hard;
+    m.trackLabel_hard=trackLabel_hard;
+    
+    %TODO:Feature Selection
+    %TODO:regression analysis
+
+    %cut the first 5s and last 5s data and filter to delta\theta\alpha\beta\gamma
+    % [prepare,track_prepare,prepare_delta,prepare_theta,prepare_alpha,prepare_beta,prepare_gamma] = EEGFilter_diffbands(EXP_prepare_f);
+    % [easy,track_easy, easy_delta,easy_theta,easy_alpha,easy_beta,easy_gamma] = EEGFilter_diffbands(EXP_easy_f);
+    % [medium,track_medium, medium_delta,medium_theta,medium_alpha,medium_beta,medium_gamma] = EEGFilter_diffbands(EXP_medium_f);
+    % [hard,track_hard, hard_delta,hard_theta,hard_alpha,hard_beta,hard_gamma] = EEGFilter_diffbands(EXP_hard_f);
+
+end
+delete(MyPar);
 
 

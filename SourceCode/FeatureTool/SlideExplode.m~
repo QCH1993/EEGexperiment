@@ -1,0 +1,8 @@
+function [ eegV,trackV ] = SlideExplode( eeg,track,stride,N_window)
+%SlideExplode Summary of this function goes here
+%   Detailed explanation goes here
+% track_unit means one single sliding window data
+
+
+end
+
