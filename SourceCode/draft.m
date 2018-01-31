@@ -10,7 +10,7 @@ file = dir(SourceDataPath);
 MyPar = parpool;
 parfor i=3:length(file)
     
-    sample_path = [SourceDataPath,file(i).name,'/'];
+    sample_path = [SourceDataPath,file(i).name,'/']
     [Mat_eeg,config] = ReadEEG(sample_path,'vhdr');
     Mat_track = ReadTrack_csv(sample_path);
     % load electrodes position
@@ -50,8 +50,8 @@ parfor i=3:length(file)
     window=5000;
     tmp=zeros(1);
     [ eegFeatureMap_easy,trackLabel_easy ]=FeatureExtract('easy',EXP_easy_n,track_easy ,stride,window);
-    [ eegFeatureMap_medium,trackLabel_medium ]=draft2();
-    [ eegFeatureMap_hard,trackLabel_hard ]=draft2();
+    [ eegFeatureMap_medium,trackLabel_medium ]=FeatureExtract(EXP_medium_n,'hard',track_medium ,stride,window);
+    [ eegFeatureMap_hard,trackLabel_hard ]=FeatureExtract(EXP_hard_n,'hard',track_hard ,stride,window);
     
     m=matfile(sprintf([file(i).name,'.mat']),'writable',true)
     m.eegFeatureMap_easy=eegFeatureMap_easy;
@@ -60,6 +60,7 @@ parfor i=3:length(file)
     m.trackLabel_medium=trackLabel_medium;
     m.eegFeatureMap_hard=eegFeatureMap_hard;
     m.trackLabel_hard=trackLabel_hard;
+    
     
     %TODO:Feature Selection
     %TODO:regression analysis

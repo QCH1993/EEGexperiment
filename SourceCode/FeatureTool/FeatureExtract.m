@@ -14,7 +14,7 @@ for i=1:stride:col_eeg-N_window
     track_now = track(:,i:i+N_window-1);
     eegFeatureMap = [eegFeatureMap; eegUnitFeatureExtract(eeg_now)];
     trackUnitFeature = [trackUnitFeature; TrackUnitFeatureExtract(track_now)];
-   i
+   
     
 end
  
